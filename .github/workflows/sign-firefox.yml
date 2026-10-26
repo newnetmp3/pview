@@ -1,84 +1,41 @@
-name: Sign Firefox add-on
+name: Validate PView Firefox add-ons
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - "bootstrap/READY"
       - "addons/pornhex-video-saver/**"
       - ".github/workflows/sign-firefox.yml"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  validate-and-sign:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Check out PView
         uses: actions/checkout@v4
 
-      - name: Initialize addon source from bootstrap archive
-        if: ${{ hashFiles('bootstrap/READY') != '' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p addons/pornhex-video-saver
-          cat bootstrap/source.part* | base64 --decode > /tmp/pornhex-source.tar.gz
-          echo "3a20d7512124a041db8eab6e36ee4861f3db11101f8aafcfc9f606a6549b02b1  /tmp/pornhex-source.tar.gz" | sha256sum --check
-          tar -xzf /tmp/pornhex-source.tar.gz -C addons/pornhex-video-saver --no-same-owner
-          rm -rf bootstrap
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "Import Pornhex add-on source from bootstrap"
-            git push origin HEAD:main
-          fi
-
-      - name: Use Node.js 22
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
 
-      - name: Install Mozilla web-ext
-        run: npm install --global web-ext
-
-      - name: Run local tests
+      - name: Run add-on tests
         working-directory: addons/pornhex-video-saver
         run: |
           node tests/run.js
           node tests/hls-integration.js
 
-      - name: Validate extension for Mozilla
+      - name: Validate Firefox manifest and package
         run: |
-          web-ext lint --source-dir addons/pornhex-video-saver \
-            --ignore-files "tests/**" README.md sign-unlisted.sh
-
-      - name: Obtain Mozilla unlisted signature
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
-          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-        run: |
-          set -euo pipefail
-          if [[ -z "$WEB_EXT_API_KEY" || -z "$WEB_EXT_API_SECRET" ]]; then
-            echo "::error::Configure repository secrets AMO_JWT_ISSUER and AMO_JWT_SECRET from addons.mozilla.org first."
-            exit 1
-          fi
-          mkdir -p signed
-          web-ext sign --channel unlisted \
+          npm exec --yes --package=web-ext -- web-ext lint \
             --source-dir addons/pornhex-video-saver \
-            --artifacts-dir signed \
             --ignore-files "tests/**" README.md sign-unlisted.sh
-          compgen -G "signed/*.xpi" > /dev/null || { echo "::error::No signed XPI was returned by Mozilla."; exit 1; }
 
-      - name: Save signed Firefox add-on
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pornhex-video-saver-signed
-          path: signed/*.xpi
-          if-no-files-found: error
-          retention-days: 90
+# The Mozilla credentials are held in the R20eb repository's firefox-signing
+# environment, not in PView. The signing workflow is:
+# https://github.com/newnetmp3/roll20embetterment/actions/workflows/pview-firefox-sign.yml
