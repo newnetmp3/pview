@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pornhex Video Saver</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+  <main>
+    <header><div class="brand"><div class="mark">▶</div><div><h1>Video Saver</h1><span>PORNHEX · FIREFOX</span></div></div><button class="subtle" id="refresh" title="Scan page again" aria-label="Scan page again">↻</button></header>
+    <section class="page"><div class="eyebrow">CURRENT VIDEO</div><div id="pageTitle" class="pageTitle">Checking current tab…</div></section>
+    <section class="controls"><span class="eyebrow">DETECTED MEDIA</span><span class="count" id="count">0 streams</span></section>
+    <div id="list" class="list"><p class="empty">Open a video page, start playback if needed, and click ↻.</p></div>
+    <section id="job" class="job hidden"><div class="jobrow"><span id="jobTitle">Starting download…</span><span id="jobPercent">0%</span></div><div class="track"><div id="jobBar"></div></div><p id="jobError"></p><button id="cancel" class="secondary">Cancel</button></section>
+    <div id="message" class="message hidden"></div>
+    <footer><span class="light"></span> Local extension · No uploads</footer>
+  </main>
+  <script src="shared.js"></script><script src="popup.js"></script>
+</body></html>

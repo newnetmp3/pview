@@ -1,0 +1,22 @@
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px}
+*{box-sizing:border-box}
+body{width:386px;margin:0;color:#c0caf5;background:#161a2b}
+main{min-height:240px}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid #31364f;background:#1c2137}
+.brand{display:flex;gap:12px;align-items:center}.mark{height:40px;width:40px;display:grid;place-items:center;background:linear-gradient(135deg,#7aa2f7,#bb9af7);border-radius:12px;color:#151b2e;font-size:19px;box-shadow:0 4px 12px #111428}
+h1{font-size:17px;letter-spacing:-.3px;margin:0 0 2px;font-weight:700}.brand span{font-size:10px;color:#7d88af;font-weight:800;letter-spacing:1.5px}
+button{font:inherit;cursor:pointer;border:0;color:#171b2e;border-radius:7px;padding:8px 12px;background:#7aa2f7;font-weight:700}
+button:hover{filter:brightness(1.11)}button:disabled{cursor:not-allowed;opacity:.45}
+button.subtle{background:#2d3450;color:#c0caf5;border:1px solid #454c69;font-size:22px;line-height:1;padding:6px 12px}
+button.secondary{color:#bbc9e8;background:#363e59;border:1px solid #515c79;font-size:11px}
+.page{margin:18px 20px 16px}.eyebrow{font-size:10px;color:#7f8bae;letter-spacing:1.2px;font-weight:800}.pageTitle{font-size:14px;color:#e0e6fd;margin-top:6px;font-weight:600;max-height:40px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.controls{display:flex;justify-content:space-between;align-items:center;margin:14px 20px 10px}.count{font-size:11px;color:#9aa7cd;background:#252c44;border-radius:5px;padding:3px 7px}
+.list{padding:0 14px;max-height:365px;overflow-y:auto}.empty{line-height:1.6;padding:10px 6px 24px;color:#8893b5}
+.media{border:1px solid #343b55;border-radius:10px;background:#20263c;padding:12px;margin:8px 0;display:flex;flex-direction:column;gap:9px}
+.mediaHead{display:flex;align-items:center;gap:9px}.mediaBadge{font-size:10px;border-radius:5px;font-weight:800;background:#384c70;color:#94bdf7;padding:4px 6px;letter-spacing:.6px}.mediaBadge.hls{background:#403858;color:#c4a6fa}.mediaBadge.dash{background:#4d3d47;color:#ffb9a7}
+.mediaInfo{flex:1;min-width:0}.mediaTitle{color:#dae1f9;font-size:12px;font-weight:700}.mediaSub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#7f8cb5;font-size:10px;margin-top:3px}
+.mediaActions{display:flex;gap:6px}.mediaActions button{flex:1;font-size:11px;padding:8px 6px}.mediaActions .secondary{flex:0 0 auto}
+.quality{background:#151b2d;color:#c0caf5;border:1px solid #46516f;min-width:100%;border-radius:6px;padding:7px;font:inherit;font-size:12px}
+.job{margin:12px 20px;padding:12px;background:#252c44;border:1px solid #455178;border-radius:9px}.jobrow{display:flex;justify-content:space-between;gap:12px;font-size:11px;font-weight:600}.track{height:5px;background:#13182a;border-radius:4px;margin:10px 0;overflow:hidden}.track>div{height:100%;width:0%;background:#9ece6a;transition:width .2s}.job p{font-size:11px;line-height:1.5;color:#f7768e;overflow-wrap:anywhere}.job button{margin-top:4px}
+.message{margin:12px 20px;background:#2d344d;color:#d2dbf5;border-radius:7px;padding:9px 12px;font-size:11px;overflow-wrap:anywhere;line-height:1.5}
+.hidden{display:none!important}footer{padding:15px 20px;color:#7b86a8;font-size:10px;border-top:1px solid #30374e;margin-top:16px;display:flex;align-items:center;gap:8px}.light{height:6px;width:6px;border-radius:100%;background:#9ece6a}
