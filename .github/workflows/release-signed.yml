@@ -1,0 +1,86 @@
+name: Release signed Firefox add-on
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/release-signed.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pview-pornhex-v1.0.1-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Retrieve Mozilla-signed v1.0.1 XPI
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/newnetmp3/roll20embetterment/releases/download/pview-pornhex-v1.0.1/pview-pornhex-video-saver-v1.0.1-signed.xpi"
+          mkdir -p dist
+          for attempt in $(seq 1 25); do
+            if curl --fail --location --silent --show-error "$url" -o dist/pview-pornhex-video-saver-v1.0.1-signed.xpi; then
+              break
+            fi
+            if [[ "$attempt" -eq 25 ]]; then
+              echo "::error::The R20eb signed staging asset was not published."
+              exit 1
+            fi
+            echo "Waiting for signed artifact staging (${attempt}/25)"
+            sleep 15
+          done
+
+      - name: Verify signed artifact corresponds to this PView source
+        shell: bash
+        run: |
+          set -euo pipefail
+          file="dist/pview-pornhex-video-saver-v1.0.1-signed.xpi"
+          unzip -t "$file" | tail -1
+          unzip -Z -1 "$file" | grep -q '^META-INF/'
+          unzip -p "$file" manifest.json > dist/signed-manifest.json
+          jq -e '.version == "1.0.1" and .browser_specific_settings.gecko.id == "pornhex-video-saver@local.addon"' dist/signed-manifest.json
+          diff -u <(jq -S . addons/pornhex-video-saver/manifest.json) <(jq -S . dist/signed-manifest.json)
+          sha256sum "$file"
+
+      - name: Publish PView v1.0.1 GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v1.0.1"
+          file="dist/pview-pornhex-video-saver-v1.0.1-signed.xpi"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists. Verifying artifact name."
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fxq "$(basename "$file")"
+          else
+            cat > dist/release-notes.md <<'NOTES'
+          ## Firefox Desktop + Android
+
+          **Officially signed by Mozilla (unlisted)**, so the attached XPI is the installable extension. Same Firefox extension ID and source code for both platforms.
+
+          **Desktop:** Detect direct MP4/WebM and compatible HLS on-demand streams and use Firefox Downloads. DASH and complex HLS require external tools.
+
+          **Firefox for Android:** Open a video page, use Extensions → Video Saver → Save on page, then tap the on-page download link. Direct files can use a native browser download link; HLS and some direct files can be prepared locally before tapping Save. Local assembly is limited to 160 MiB to avoid excessive memory usage.
+
+          **Limitations:** Live Pornhex playback and physical Android download behavior have not been verified. Some CDNs may prevent fetching or opening media due to CORS, authentication, or expiring URLs. Download only media you're allowed to save.
+
+          **Source:** https://github.com/newnetmp3/pview/tree/main/addons/pornhex-video-saver
+
+          **SHA-256 checksum** can be calculated from the XPI using `sha256sum`.
+          NOTES
+            gh release create "$tag" "$file" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "PView v1.0.1 — Firefox Desktop & Android (Mozilla signed)" \
+              --notes-file dist/release-notes.md \
+              --latest
+          fi
