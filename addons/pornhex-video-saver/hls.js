@@ -93,7 +93,7 @@ const HLS = (() => {
   function bestVariant(variants) {
     return [...variants].sort((a,b)=>b.bandwidth-a.bandwidth)[0];
   }
-  async function download(playlistUrl, onProgress, signal, selectedUrl) {
+  async function download(playlistUrl, onProgress, signal, selectedUrl, options={}) {
     let url = playlistUrl;
     let playlist;
     for (let level=0; level<4; level++) {
@@ -113,6 +113,13 @@ const HLS = (() => {
     const encrypted = playlist.segments.some(s=>!!s.key);
     if (hasMap && encrypted) throw new Error('Encrypted fragmented MP4 requires FFmpeg.');
     const pieces = [], keyCache = new Map();
+    const maxBytes = options.maxBytes ?? Infinity;
+    let totalBytes = 0;
+    function appendPiece(bytes) {
+      totalBytes += bytes.byteLength;
+      if (totalBytes > maxBytes) throw new Error('Stream exceeds the mobile memory limit. Try a lower quality or download on desktop.');
+      pieces.push(bytes);
+    }
     let currentMap = '';
     for (let i=0; i<playlist.segments.length; i++) {
       if (signal?.aborted) throw new DOMException('Download cancelled.', 'AbortError');
@@ -124,7 +131,7 @@ const HLS = (() => {
           if (!Number.isFinite(offset) || !Number.isFinite(len)) throw new Error('Unsupported initialization range.');
           mapRange = {start:offset,end:offset+len-1};
         }
-        pieces.push(await readUrl(segment.map.url,{signal,range:mapRange}));
+        appendPiece(await readUrl(segment.map.url,{signal,range:mapRange}));
         currentMap = `${segment.map.url}|${segment.map.range}`;
       }
       let bytes = await readUrl(segment.url,{signal,range:segment.range});
@@ -137,8 +144,8 @@ const HLS = (() => {
         }
         bytes = new Uint8Array(await crypto.subtle.decrypt({name:'AES-CBC',iv:ivBytes(segment.key.iv, segment.sequence)},keyCache.get(segment.key.url),bytes));
       }
-      pieces.push(bytes);
-      onProgress?.({done:i+1,total:playlist.segments.length});
+      appendPiece(bytes);
+      onProgress?.({done:i+1,total:playlist.segments.length,bytes:totalBytes});
     }
     return {blob:new Blob(pieces,{type:hasMap?'video/mp4':'video/mp2t'}),ext:hasMap?'mp4':'ts', segments:playlist.segments.length};
   }
