@@ -41,5 +41,6 @@ const download=vm.runInContext('HLS.download',context);
  fixture('aes.m3u8','#EXTM3U\n#EXT-X-MEDIA-SEQUENCE:12\n#EXT-X-KEY:METHOD=AES-128,URI="key.bin"\n#EXTINF:2,\nenc.ts\n#EXT-X-ENDLIST');
  result=await download(base+'aes.m3u8');
  assert.equal(await result.blob.text(),'decrypted segment');
- console.log('PASS: HLS VOD master selection, MPEG-TS assembly, fMP4 init map, AES-128 segments');
+ await assert.rejects(download(base+'media.m3u8', undefined, undefined, undefined, {maxBytes:1}), /memory limit/);
+ console.log('PASS: HLS VOD master selection, MPEG-TS assembly, fMP4 init map, AES-128 segments and mobile memory limits');
 })().catch(e=>{console.error(e);process.exitCode=1;});
