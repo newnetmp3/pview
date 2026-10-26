@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const $ = (id)=>document.getElementById(id);
-  let tabId=null, previousSignature='',variants=new Map();
+  let tabId=null, previousSignature='',variants=new Map(),android=false;
   function message(text){ $('message').textContent=text; $('message').classList.toggle('hidden',!text); }
   function textEl(tag,cls,value){const e=document.createElement(tag);if(cls)e.className=cls;e.textContent=value;return e;}
   function showJob(job){
@@ -33,11 +33,12 @@
       card.append(select);
     }
     const actions=textEl('div','mediaActions','');
-    const button=document.createElement('button');button.textContent=item.kind==='dash'?'Copy FFmpeg command':'Download';
+    const button=document.createElement('button');button.textContent=item.kind==='dash'?'Copy FFmpeg command':android?'Save on page':'Download';
     button.addEventListener('click',async()=>{
       if(item.kind==='dash') return copyCommand(item.url);
       message(''); const result=await call('DOWNLOAD',{url:item.url,selectedUrl:select?.value||undefined});
       if(result?.error) message(result.error);
+      else if(result?.job?.mobile) message('The mobile save panel is open on the video page. Return to the page to tap Save or Prepare file.');
       await refresh();
     });
     actions.append(button);
@@ -78,6 +79,11 @@
     try {response=await call('GET_STATE');}
     catch(e){message(e.message);return;}
     if(response?.error){message(response.error);return;}
+    const updatedAndroid=!!response.platform?.android || response.platform?.nativeDownloads===false;
+    if (updatedAndroid!==android) { android=updatedAndroid;previousSignature=''; }
+    $('platformHint').textContent=android
+      ? 'Android: tap Save on page, then use the real download link. For HLS, prepare the file first.'
+      : 'Desktop: files save through Firefox Downloads.';
     $('pageTitle').textContent=PH.cleanTitle(response.title);
     const items=response.candidates||[];
     $('count').textContent=items.length+' '+(items.length===1?'stream':'streams');
