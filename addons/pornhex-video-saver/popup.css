@@ -20,3 +20,6 @@ button.secondary{color:#bbc9e8;background:#363e59;border:1px solid #515c79;font-
 .job{margin:12px 20px;padding:12px;background:#252c44;border:1px solid #455178;border-radius:9px}.jobrow{display:flex;justify-content:space-between;gap:12px;font-size:11px;font-weight:600}.track{height:5px;background:#13182a;border-radius:4px;margin:10px 0;overflow:hidden}.track>div{height:100%;width:0%;background:#9ece6a;transition:width .2s}.job p{font-size:11px;line-height:1.5;color:#f7768e;overflow-wrap:anywhere}.job button{margin-top:4px}
 .message{margin:12px 20px;background:#2d344d;color:#d2dbf5;border-radius:7px;padding:9px 12px;font-size:11px;overflow-wrap:anywhere;line-height:1.5}
 .hidden{display:none!important}footer{padding:15px 20px;color:#7b86a8;font-size:10px;border-top:1px solid #30374e;margin-top:16px;display:flex;align-items:center;gap:8px}.light{height:6px;width:6px;border-radius:100%;background:#9ece6a}
+
+.platformHint{font-size:11px;line-height:1.5;margin:12px 20px;color:#a9b9df}
+@media(max-width:450px){body{width:100%;min-width:270px}main{width:100%}.list{max-height:min(55vh,420px)}.mediaActions{flex-wrap:wrap}.mediaActions button{min-height:44px}.quality{min-height:44px}button.subtle{min-height:44px}}
