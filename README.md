@@ -2,13 +2,13 @@
 
 PView is a source repository for Firefox extensions, with each add-on located in `addons/<name>/`.
 
-## Pornhex Video Saver
+## Pornhex Video Saver (desktop + Android, v1.0.1)
 
 - Source: [addons/pornhex-video-saver](addons/pornhex-video-saver)
 - Continuous tests and lint: [PView validation workflow](.github/workflows/sign-firefox.yml)
 - Mozilla unlisted signing: [R20eb PView signing workflow](https://github.com/newnetmp3/roll20embetterment/actions/workflows/pview-firefox-sign.yml)
 
-The extension detects downloadable MP4/WebM files, HLS streams, and DASH stream metadata. Live-site compatibility is not guaranteed. Only download media you have permission to save.
+Desktop Firefox uses the browser's Downloads API. Firefox for Android uses an on-page, user-tapped download link because the extension downloads API is unavailable on Android. The Android panel can locally prepare video files and HLS streams up to 160 MiB; very large files need desktop Firefox. Neither live-site playback nor physical Android compatibility has been verified yet. Only download media you have permission to save.
 
 ## Signing Firefox extensions
 
@@ -19,7 +19,7 @@ The Mozilla signing credentials already exist in the R20eb GitHub repository und
 3. Click **Run workflow**, select `main`, and run it.
 4. Open the completed run. Download its `pview-pornhex-video-saver-mozilla-signed` artifact. Extract the ZIP to obtain a Mozilla-signed XPI, then install it in Firefox.
 
-The signing job checks out PView's main branch, runs tests and Mozilla lint, signs as an **unlisted** extension, and uploads the signed XPI. It does not publish this extension to Mozilla's public listing.
+The signing job checks out PView's main branch, runs desktop and Android regression tests and Mozilla lint, signs as an **unlisted** extension, and uploads the signed XPI. It does not publish this extension to Mozilla's public listing.
 
 ### Future versions
 
