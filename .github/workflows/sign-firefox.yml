@@ -29,6 +29,8 @@ jobs:
         run: |
           node tests/run.js
           node tests/hls-integration.js
+          node tests/mobile.js
+          node tests/background-platform.js
 
       - name: Validate Firefox manifest and package
         run: |
