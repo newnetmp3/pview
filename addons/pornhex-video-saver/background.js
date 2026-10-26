@@ -4,6 +4,20 @@ const mediaByTab = new Map();
 const jobsByTab = new Map();
 const blobDownloads = new Map();
 let nextJobId = 1;
+let capabilitiesPromise = null;
+function capabilities() {
+  if (!capabilitiesPromise) {
+    capabilitiesPromise = (async () => {
+      let android = /Android/i.test(navigator.userAgent || '');
+      try {
+        const info = await browser.runtime.getPlatformInfo();
+        android = info.os === 'android';
+      } catch { /* Older runtimes may lack platform information. */ }
+      return {android, nativeDownloads:!android && typeof browser.downloads?.download === 'function'};
+    })();
+  }
+  return capabilitiesPromise;
+}
 
 function state(tabId) {
   if (!mediaByTab.has(tabId)) mediaByTab.set(tabId, {candidates:new Map(),title:'',pageUrl:''});
@@ -37,8 +51,8 @@ async function addCandidate(tabId, rawUrl, metadata={}) {
   // Keep the registry bounded. First detected candidates are generally useful.
   if (entry.candidates.size >= 50) return false;
   entry.candidates.set(url, {url, kind, quality:PH.quality(url), label:metadata.label || ''});
-  browser.browserAction.setBadgeText({tabId,text:String(entry.candidates.size)}).catch(()=>{});
-  browser.browserAction.setBadgeBackgroundColor({tabId,color:'#5277d4'}).catch(()=>{});
+  browser.browserAction?.setBadgeText?.({tabId,text:String(entry.candidates.size)}).catch(()=>{});
+  browser.browserAction?.setBadgeBackgroundColor?.({tabId,color:'#5277d4'}).catch(()=>{});
   return true;
 }
 function candidateArray(tabId) { return [...state(tabId).candidates.values()]; }
@@ -70,10 +84,10 @@ browser.tabs.onRemoved.addListener((tabId)=>{
 browser.tabs.onUpdated.addListener((tabId, changeInfo)=>{
   if (changeInfo.url) {
     mediaByTab.delete(tabId);
-    browser.browserAction.setBadgeText({tabId,text:''}).catch(()=>{});
+    browser.browserAction?.setBadgeText?.({tabId,text:''}).catch(()=>{});
   }
 });
-browser.downloads.onChanged.addListener((change)=>{
+browser.downloads?.onChanged?.addListener((change)=>{
   if (change.state && ['complete','interrupted'].includes(change.state.current)) {
     const url=blobDownloads.get(change.id);
     if (url) { URL.revokeObjectURL(url); blobDownloads.delete(change.id); }
@@ -94,6 +108,23 @@ async function startDownload(tabId,media,selectedUrl) {
   const running=jobsByTab.get(tabId);
   if (running && running.state==='working') throw new Error('A download is already in progress for this tab.');
   if (candidate.kind === 'dash') throw new Error('DASH needs FFmpeg. Use Copy FFmpeg command.');
+  const platform = await capabilities();
+  if (!platform.nativeDownloads) {
+    // Android has no extension downloads API: display a real link on the video page.
+    const title = entry.title || tab.title || 'video';
+    const ext = candidate.kind === 'hls' ? 'ts' : new URL(candidate.url).pathname.match(/\.(mp4|m4v|webm|mov)$/i)?.[1]?.toLowerCase() || 'mp4';
+    const name = PH.cleanTitle(title) + (candidate.quality ? ` - ${candidate.quality}` : '') + '.' + ext;
+    try {
+      const response = await browser.tabs.sendMessage(tabId, {
+        action:'OPEN_MOBILE_SAVER',url:candidate.url,kind:candidate.kind,
+        filename:name,selectedUrl:selectedUrl || ''
+      }, {frameId:0});
+      if (response?.error) throw new Error(response.error);
+      return {mobile:true};
+    } catch(err) {
+      throw new Error(`Could not open the mobile saver on this page: ${err.message || err}. Reload the tab and try again.`);
+    }
+  }
   const controller=new AbortController();
   const job={id:nextJobId++,state:'working',label:'Starting download…',progress:0,controller,error:'',downloadId:null};
   jobsByTab.set(tabId,job);
@@ -148,7 +179,7 @@ browser.runtime.onMessage.addListener(async(message,sender)=>{
   if (!tab) return {error:'Open a Pornhex video page and try again.'};
   if (message.action==='GET_STATE') {
     const entry=state(tabId);
-    return {title:entry.title || tab.title || '', candidates:candidateArray(tabId),job:publicJob(jobsByTab.get(tabId))};
+    return {title:entry.title || tab.title || '', candidates:candidateArray(tabId),job:publicJob(jobsByTab.get(tabId)),platform:await capabilities()};
   }
   if (message.action==='OPTIONS') {
     const candidate=state(tabId).candidates.get(message.url);
